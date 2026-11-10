@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#17201B">
+<title>ניהול – עבודות שטח</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Crect width=%2224%22 height=%2224%22 rx=%225%22 fill=%22%2317201B%22/%3E%3Cpath d=%22M12 20v-9M12 13c-3.5 0-5-2-5-5 3 0 5 1.7 5 5zM12 11c0-3 2-5 5-5 0 3-1.7 5-5 5z%22 stroke=%22white%22 stroke-width=%221.6%22 fill=%22none%22/%3E%3C/svg%3E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ניהול">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap">
+<style>
+:root{--bg:#F3F5F1;--card:#FFFFFF;--ink:#17201B;--muted:#5B655E;--line:#E1E6DF;--line2:#C9D2C7;--green:#1E6B45;--soft:#E3EEE6;--red:#B42318;--redbg:#FDECEA;--amber:#8A5A00;--amberbg:#FFF4D6;--dark:#17201B}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font-family:inherit;color:inherit}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 96px}
+.bar{position:sticky;top:0;z-index:5;background:var(--dark);color:#fff}
+.bar .in{max-width:980px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bar h1{margin:0;font-size:20px;font-weight:800}
+.bar button{background:transparent;border:1px solid #4A564F;color:#fff;border-radius:10px;min-height:40px;padding:0 12px;font-size:15px;cursor:pointer}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 0 4px}
+.tab{flex:none;min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line2);background:var(--card);font-size:16px;font-weight:500;cursor:pointer}
+.tab.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+h2{margin:18px 0 10px;font-size:19px;font-weight:800}
+h3{margin:0;font-size:17px;font-weight:700}
+.muted{color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.tile .k{font-size:14px;color:var(--muted)}
+.tile .v{font-size:22px;font-weight:800;margin-top:2px}
+.tile.warn .v{color:var(--red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:4px;min-height:28px;padding:0 10px;border-radius:14px;font-size:14px;font-weight:700;background:var(--soft);color:var(--green)}
+.chip.red{background:var(--redbg);color:var(--red)}
+.chip.amber{background:var(--amberbg);color:var(--amber)}
+.chip.gray{background:#EEF0EC;color:#3F4A43}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:none;background:var(--green);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.btn.sec{background:var(--card);color:var(--green);border:1.5px solid var(--green)}
+.btn.small{min-height:36px;padding:0 12px;font-size:14px}
+.btn:disabled{opacity:.55;cursor:default}
+.link{background:none;border:none;color:var(--green);font-size:15px;font-weight:500;padding:6px 2px;cursor:pointer;text-decoration:none}
+a.link{display:inline-block}
+.inp{height:44px;border-radius:10px;border:1px solid var(--line2);background:var(--card);padding:0 12px;font-size:16px;width:100%}
+.inp.num{width:110px;text-align:center;font-weight:700}
+.issue{border-inline-start:0;display:flex;flex-direction:column;gap:2px;text-align:right;width:100%;cursor:pointer;font:inherit}
+.issue.high{background:#FFF7F6;border-color:#F3C8C2}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:right;cursor:pointer;font:inherit}
+.table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.table th,.table td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);font-size:15px;vertical-align:middle}
+@media (max-width:520px){.table th,.table td{font-size:14px;padding:7px 4px}.inp.num{width:78px}}
+.table th{background:#EEF2EC;font-weight:700;font-size:14px}
+.scroll{overflow-x:auto}
+.err{color:var(--red);font-weight:700;background:var(--redbg);border-radius:12px;padding:10px 14px;margin:10px 0}
+.ok{color:var(--green);font-weight:700;background:var(--soft);border-radius:12px;padding:10px 14px;margin:10px 0}
+.login{max-width:380px;margin:12vh auto 0;padding:24px;background:var(--card);border-radius:18px;border:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.pin{height:60px;font-size:28px;text-align:center;letter-spacing:8px;border-radius:14px;border:2px solid var(--green);width:100%}
+.hrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.w-ok{color:var(--green)}.w-off{color:#3F4A43}.w-miss{color:var(--red)}
+.small{font-size:14px}
+.empty{padding:14px;color:var(--muted);background:var(--card);border-radius:14px;border:1px dashed var(--line2)}
+</style>
+</head>
+<body>
+<div id="app"><div class="wrap"><p class="muted" style="text-align:center;padding-top:30vh">טוען…</p></div></div>
+<script>
+(function () {
+  var app = document.getElementById('app');
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxVTKhDPk-FCT1E55Mfji6u3DPZ5iFH40fB6FCCnNafJJJnjGjhv_rFg9bttiiTgPIBNw/exec';
+  var S = { pin: '', tab: 'overview', data: {}, client: null, msg: '', err: '', busy: false, q: '', feedWorker: '' };
+
+  function ls(k, v) {
+    try {
+      if (v === undefined) return localStorage.getItem('fwa_' + k);
+      if (v === null) localStorage.removeItem('fwa_' + k); else localStorage.setItem('fwa_' + k, v);
+    } catch (e) { return null; }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(n) {
+    n = Number(n) || 0;
+    return n.toLocaleString('he-IL', { maximumFractionDigits: 0 }) + ' ₪';
+  }
+  function msg(e) { return (e && e.message) ? e.message : 'שגיאה'; }
+  function call(fn, args, ok, fail) {
+    fail = fail || function (e) { S.busy = false; S.err = msg(e); if (/קוד שגוי|לא הוגדר קוד/.test(S.err)) { S.pin = ''; ls('pin', null); } render(); };
+    var full = [S.pin].concat(args || []);
+    if (window.google && google.script && google.script.run) {
+      var r = google.script.run.withSuccessHandler(ok).withFailureHandler(fail);
+      r[fn].apply(r, full);
+      return;
+    }
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn: fn, args: full }), redirect: 'follow' })
+      .then(function (res) { return res.json(); })
+      .then(function (j) { if (j && j.ok) ok(j.data); else fail(new Error((j && j.error) || 'שגיאה בשרת')); })
+      .catch(function () { fail(new Error('אין חיבור לשרת – בדקי קליטה ונסי שוב')); });
+  }
+  function load(tab, force) {
+    var map = { overview: 'adminOverview', clients: 'adminClients', prices: 'adminPrices', stock: 'adminStock', feed: 'adminFeed' };
+    if (!force && S.data[tab]) { render(); return; }
+    S.busy = true; render();
+    call(map[tab], tab === 'feed' ? [S.feedWorker] : [], function (d) { S.data[tab] = d; S.busy = false; S.err = ''; render(); });
+  }
+  function openClient(name) {
+    S.client = { name: name, data: null };
+    S.tab = 'client'; S.busy = true; S.err = ''; S.msg = ''; render(); window.scrollTo(0, 0);
+    call('adminClient', [name], function (d) { S.client.data = d; S.busy = false; render(); });
+  }
+  function flash(text) { S.msg = text; render(); setTimeout(function () { if (S.msg === text) { S.msg = ''; render(); } }, 2500); }
+  function invalidate() { S.data = {}; }
+
+  /* ---------- מסכים ---------- */
+  function vLogin() {
+    return '<div class="wrap"><div class="login"><h1 style="margin:0;font-size:24px">מסך ניהול</h1>' +
+      '<p class="muted" style="margin:0">הקלידי את הקוד שהגדרת בגיליון</p>' +
+      '<input id="pin" class="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="8" aria-label="קוד">' +
+      '<label class="hrow small"><input id="remember" type="checkbox" checked> לזכור אותי במכשיר הזה</label>' +
+      (S.err ? '<div class="err">' + esc(S.err) + '</div>' : '') +
+      '<button type="button" class="btn" data-act="login"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? 'בודק…' : 'כניסה') + '</button></div></div>';
+  }
+
+  function tabs() {
+    var t = [['overview', 'סקירה'], ['clients', 'לקוחות'], ['prices', 'מחירים'], ['stock', 'מלאי'], ['feed', 'דיווחים']];
+    var cur = S.tab === 'client' ? 'clients' : S.tab;
+    return '<div class="tabs">' + t.map(function (x) {
+      return '<button type="button" class="tab' + (cur === x[0] ? ' on' : '') + '" data-act="tab" data-v="' + x[0] + '">' + x[1] + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function shell(inner) {
+    return '<div class="bar"><div class="in"><h1>ניהול – עבודות שטח</h1><div class="hrow">' +
+      '<button type="button" data-act="refresh">רענון</button><button type="button" data-act="logout">יציאה</button></div></div></div>' +
+      '<div class="wrap">' + tabs() +
+      (S.err ? '<div class="err">' + esc(S.err) + '</div>' : '') +
+      (S.msg ? '<div class="ok">' + esc(S.msg) + '</div>' : '') +
+      (S.busy ? '<p class="muted">טוען…</p>' : inner) + '</div>';
+  }
+
+  function linksHtml(l) {
+    l = l || {};
+    var h = [];
+    if (l.photo) h.push('<a class="link" href="' + esc(l.photo) + '" target="_blank" rel="noopener">צילום</a>');
+    if (l.audio) h.push('<a class="link" href="' + esc(l.audio) + '" target="_blank" rel="noopener">הקלטה</a>');
+    if (l.map) h.push('<a class="link" href="' + esc(l.map) + '" target="_blank" rel="noopener">מפה</a>');
+    return h.join(' · ');
+  }
+
+  function vOverview() {
+    var d = S.data.overview;
+    if (!d) return '';
+    var m = d.money;
+    var miss = d.workers.filter(function (w) { return !w.count && !w.off; });
+    var h = '<div class="row"><h2 style="margin-top:8px">סקירה – ' + esc(d.today) + '</h2></div>';
+    h += '<div class="tiles">' +
+      '<div class="tile"><div class="k">הכנסות החודש</div><div class="v">' + money(m.month) + '</div></div>' +
+      '<div class="tile"><div class="k">ממתין לחיוב</div><div class="v">' + money(m.waiting) + '</div></div>' +
+      '<div class="tile"><div class="k">חויב</div><div class="v">' + money(m.billed) + '</div></div>' +
+      '<div class="tile' + (m.balance > 0 ? ' warn' : '') + '"><div class="k">יתרה לגבייה</div><div class="v">' + money(m.balance) + '</div></div></div>';
+
+    h += '<h2>העובדים היום' + (miss.length ? ' <span class="chip red">' + miss.length + ' לא דיווחו</span>' : ' <span class="chip">כולם בסדר</span>') + '</h2><div class="grid2">';
+    d.workers.forEach(function (w) {
+      var st = w.count ? '<span class="chip">' + w.count + ' דיווחים</span>' : (w.off ? '<span class="chip gray">לא עבד · ' + esc(w.off) + '</span>' : '<span class="chip red">לא דיווח</span>');
+      h += '<div class="card"><div class="row"><h3 class="' + (w.count ? 'w-ok' : w.off ? 'w-off' : 'w-miss') + '">' + esc(w.name) + '</h3>' + st + '</div>' +
+        (w.hours ? '<span class="small muted">שעות: ' + esc(w.hours) + '</span>' : '') +
+        (w.items.length ? '<div class="small">' + w.items.map(esc).join('<br>') + '</div>' : '') + '</div>';
+    });
+    h += '</div>';
+
+    var todo = '';
+    if (d.maint.length) {
+      todo += '<h3 style="margin-top:6px">תקלות פתוחות</h3>' + d.maint.map(function (x) {
+        return '<div class="card"><div class="row"><b>' + esc(x.vehicle) + '</b>' + (String(x.urgency).indexOf('דחוף') === 0 ? '<span class="chip red">דחוף</span>' : '<span class="chip amber">' + esc(x.urgency || 'תקלה') + '</span>') + '</div>' +
+          '<span>' + esc(x.desc || '(בהקלטה)') + '</span><span class="small muted">' + esc(x.date) + ' · ' + esc(x.worker) + '</span>' +
+          '<div class="row"><span>' + linksHtml({ photo: x.photo, audio: x.audio }) + '</span><button type="button" class="btn small sec" data-act="resolve" data-v="' + esc(x.id) + '">טופל</button></div></div>';
+      }).join('');
+    }
+    if (d.expenses.length) {
+      var sum = d.expenses.reduce(function (a, x) { return a + x.amount; }, 0);
+      todo += '<h3 style="margin-top:6px">הוצאות אישיות להחזר · ' + money(sum) + '</h3>' + d.expenses.map(function (x) {
+        return '<div class="card"><div class="row"><b>' + esc(x.worker) + ' · ' + money(x.amount) + '</b><span class="small muted">' + esc(x.date) + '</span></div>' +
+          '<span>' + esc(x.type) + (x.desc ? ' · ' + esc(x.desc) : '') + '</span>' +
+          '<div class="row"><span>' + linksHtml({ photo: x.photo }) + '</span><button type="button" class="btn small sec" data-act="reimburse" data-v="' + esc(x.id) + '">הוחזר</button></div></div>';
+      }).join('');
+    }
+    var low = d.stock.filter(function (x) { return x.status === 'להזמין'; });
+    if (low.length) todo += '<h3 style="margin-top:6px">להזמין</h3><div class="card">' + low.map(function (x) { return esc(x.item) + ' – נשארו ' + esc(x.balance) + ' ' + esc(x.unit); }).join('<br>') + '</div>';
+    if (d.service.length) todo += '<h3 style="margin-top:6px">טיפולים לכלים</h3><div class="card">' + d.service.map(function (x) { return esc(x.vehicle) + ' – ' + esc(x.status) + ' (נשארו ' + esc(x.left) + ')'; }).join('<br>') + '</div>';
+
+    var counts = {};
+    d.issues.forEach(function (x) { counts[x.title] = (counts[x.title] || 0) + 1; });
+    h += '<h2>דורש טיפול' + (d.issues.length ? ' <span class="chip red">' + d.issues.length + '</span>' : '') + '</h2>';
+    if (!d.issues.length && !todo) h += '<div class="empty">אין כרגע שום דבר שדורש טיפול 👍</div>';
+    if (d.issues.length) {
+      h += '<p class="small muted" style="margin:0 0 8px">' + Object.keys(counts).map(function (k) { return esc(k) + ': ' + counts[k]; }).join(' · ') + ' — לחיצה על שורה פותחת את הלקוח</p><div class="list">';
+      d.issues.slice(0, 60).forEach(function (x) {
+        h += '<button type="button" class="card issue ' + x.level + '" data-act="client" data-v="' + esc(x.client) + '">' +
+          '<div class="row" style="width:100%"><b>' + esc(x.client) + '</b><span class="chip ' + (x.level === 'high' ? 'red' : 'amber') + '">' + esc(x.title) + '</span></div>' +
+          '<span class="small">' + esc(x.text) + (x.extra ? ' · ' + esc(x.extra) : '') + '</span></button>';
+      });
+      if (d.issues.length > 60) h += '<p class="small muted">ועוד ' + (d.issues.length - 60) + '…</p>';
+      h += '</div>';
+    }
+    return h + todo;
+  }
+
+  function vClients() {
+    var list = S.data.clients || [];
+    var q = S.q.trim();
+    var f = q ? list.filter(function (c) { return c.name.indexOf(q) >= 0; }) : list;
+    var h = '<h2 style="margin-top:8px">לקוחות</h2><input id="q" class="inp" type="search" placeholder="חיפוש לקוח" value="' + esc(S.q) + '" autocomplete="off"><div class="list" style="margin-top:10px">';
+    f.forEach(function (c) {
+      h += '<button type="button" class="item" data-act="client" data-v="' + esc(c.name) + '"><div style="display:flex;flex-direction:column;gap:2px">' +
+        '<b>' + esc(c.name) + '</b><span class="small muted">' + esc(c.group) + (c.last ? ' · אחרון: ' + esc(c.last) : '') + '</span></div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">' +
+        (c.waiting ? '<span class="chip">ממתין ' + money(c.waiting) + '</span>' : '') +
+        (c.unpriced ? '<span class="chip red">' + c.unpriced + ' בלי מחיר</span>' : '') +
+        (c.balance > 0 ? '<span class="chip amber">יתרה ' + money(c.balance) + '</span>' : '') + '</div></button>';
+    });
+    if (!f.length) h += '<div class="empty">לא נמצא לקוח</div>';
+    return h + '</div>';
+  }
+
+  function vClient() {
+    var c = S.client, d = c && c.data;
+    var h = '<div class="row" style="margin-top:8px"><h2 style="margin:0">' + esc(c ? c.name : '') + '</h2><button type="button" class="link" data-act="tab" data-v="clients">← כל הלקוחות</button></div>';
+    if (!d) return h;
+    h += '<div class="tiles" style="margin-top:10px">' +
+      '<div class="tile"><div class="k">ממתין לחיוב</div><div class="v">' + money(d.waiting) + '</div></div>' +
+      '<div class="tile"><div class="k">חויב</div><div class="v">' + money(d.billed) + '</div></div>' +
+      '<div class="tile"><div class="k">שולם</div><div class="v">' + money(d.paid) + '</div></div>' +
+      '<div class="tile' + (d.balance > 0 ? ' warn' : '') + '"><div class="k">יתרה לגבייה</div><div class="v">' + money(d.balance) + '</div></div></div>';
+    if (d.unpriced) h += '<div class="err">' + d.unpriced + ' שורות בלי מחיר – קובעים מחיר בטבלה למטה (ללקוח הזה או כללי)</div>';
+
+    h += '<h2>מחירים ללקוח</h2><p class="small muted" style="margin:0 0 8px">"מחיר מיוחד" גובר על המחיר הכללי. משאירים ריק = המחיר הכללי.</p><div class="scroll"><table class="table"><tr><th>פריט</th><th>כללי</th><th>מיוחד</th><th></th></tr>';
+    d.prices.forEach(function (p, i) {
+      h += '<tr' + (p.used && p.general === '' && p.own === '' ? ' style="background:#FFF7F6"' : '') + '><td>' + esc(p.item) + ' <span class="small muted">/ ' + esc(p.unit) + (p.used ? '' : ' · לא בשימוש') + '</span></td>' +
+        '<td>' + (p.general === '' ? '<span class="chip red">אין</span>' : esc(p.general)) + '</td>' +
+        '<td><input class="inp num" id="cp' + i + '" inputmode="decimal" value="' + esc(p.own) + '"></td>' +
+        '<td><button type="button" class="btn small" data-act="saveCP" data-v="' + i + '">שמירה</button></td></tr>';
+    });
+    h += '</table></div>';
+
+    h += '<h2>רישום תשלום</h2><div class="card"><div class="hrow">' +
+      '<input class="inp num" id="payAmt" inputmode="decimal" placeholder="סכום ₪" style="width:140px">' +
+      '<select class="inp" id="payMethod" style="width:140px"><option>העברה</option><option>צ\'ק</option><option>מזומן</option><option>אשראי</option><option>אחר</option></select>' +
+      '<input class="inp" id="payNote" placeholder="אסמכתא / הערה" style="flex:1;min-width:160px">' +
+      '<button type="button" class="btn" data-act="pay">רישום</button></div></div>';
+
+    h += '<h2>דיווחים (' + d.lines.length + ' אחרונים)</h2><div class="list">';
+    d.lines.forEach(function (x, i) {
+      var st = x.status === 'חויב' ? '<span class="chip gray">חויב ' + esc(x.invoice) + '</span>' : x.status === 'לא לחיוב' ? '<span class="chip gray">לא לחיוב</span>' :
+        (x.total === '' ? '<span class="chip red">אין מחיר</span>' : '<span class="chip">' + money(x.total) + '</span>');
+      var editable = x.id && x.status !== 'חויב';
+      h += '<div class="card"><div class="row"><b>' + esc(x.item) + ' · ' + esc(x.qty) + ' ' + esc(x.unit) + '</b>' + st + '</div>' +
+        '<span class="small muted">' + esc(x.date) + ' · ' + esc(x.worker) + (x.price !== '' && x.status !== 'לא לחיוב' ? ' · ' + esc(x.price) + ' ₪ ליחידה' : '') + '</span>' +
+        (x.details ? '<span class="small">' + esc(x.details) + '</span>' : '') +
+        '<div class="row"><span>' + linksHtml(x.links) + '</span>' +
+        (editable ? '<div class="hrow"><input class="inp num" id="lm' + i + '" inputmode="decimal" placeholder="מחיר ידני" value="' + esc(x.manual) + '" style="width:110px">' +
+          '<button type="button" class="btn small sec" data-act="saveLine" data-v="' + i + '">שמירה</button>' +
+          '<button type="button" class="btn small sec" data-act="toggleLine" data-v="' + i + '">' + (x.status === 'לא לחיוב' ? 'להחזיר לחיוב' : 'לא לחיוב') + '</button></div>' : '') +
+        '</div></div>';
+    });
+    if (!d.lines.length) h += '<div class="empty">אין דיווחים ללקוח הזה</div>';
+    return h + '</div>';
+  }
+
+  function vPrices() {
+    var list = S.data.prices || [];
+    var h = '<h2 style="margin-top:8px">מחירון כללי</h2><p class="small muted" style="margin:0 0 8px">מחיר ליחידה לכל הלקוחות. מחיר מיוחד ללקוח – בכרטיס הלקוח. פריטים בלי מחיר מופיעים ראשונים.</p>' +
+      '<div class="scroll"><table class="table"><tr><th>פריט</th><th>מחיר ₪</th><th></th></tr>';
+    list.forEach(function (p, i) {
+      h += '<tr' + (p.price === '' ? ' style="background:#FFF7F6"' : '') + '><td>' + esc(p.item) + ' <span class="small muted">/ ' + esc(p.unit) + '</span></td>' +
+        '<td><input class="inp num" id="gp' + i + '" inputmode="decimal" value="' + esc(p.price) + '"></td>' +
+        '<td><button type="button" class="btn small" data-act="saveGP" data-v="' + i + '">שמירה</button></td></tr>';
+    });
+    return h + '</table></div>';
+  }
+
+  function vStock() {
+    var d = S.data.stock;
+    if (!d) return '';
+    var h = '<h2 style="margin-top:8px">מלאי</h2><div class="scroll"><table class="table"><tr><th>חומר</th><th>נכנס</th><th>יצא</th><th>יתרה</th><th>מינ׳</th></tr>';
+    d.items.forEach(function (x) {
+      h += '<tr' + (x.status === 'להזמין' ? ' style="background:#FFF7F6"' : '') + '><td><b>' + esc(x.item) + '</b> <span class="small muted">' + esc(x.unit) + '</span>' +
+        (x.status === 'להזמין' ? '<br><span class="chip red">להזמין</span>' : '') + '</td><td>' + esc(x.inQty) + '</td><td>' + esc(x.outQty) + '</td>' +
+        '<td><b>' + esc(x.balance) + '</b></td><td>' + esc(x.min) + '</td></tr>';
+    });
+    h += '</table></div>';
+    h += '<h2>קליטת סחורה</h2><div class="card"><div class="hrow">' +
+      '<select class="inp" id="rcItem" style="flex:1;min-width:160px">' + d.items.map(function (x) { return '<option>' + esc(x.item) + '</option>'; }).join('') + '</select>' +
+      '<input class="inp num" id="rcQty" inputmode="decimal" placeholder="כמות">' +
+      '<select class="inp" id="rcUnit" style="width:100px"><option>טון</option><option>ק"ג</option><option>ליטר</option><option>גלון</option></select>' +
+      '<input class="inp" id="rcSup" placeholder="ספק (לא חובה)" style="flex:1;min-width:140px">' +
+      '<button type="button" class="btn" data-act="receipt">רישום</button></div>' +
+      '<span class="small muted">טון מומר לבד לק"ג. חומר חדש – מוסיפים קודם בלשונית "מלאי" בגיליון.</span></div>';
+    h += '<h2>קליטות אחרונות</h2>' + (d.receipts.length ? '<div class="scroll"><table class="table"><tr><th>תאריך</th><th>חומר</th><th>כמות</th><th>ספק</th></tr>' +
+      d.receipts.map(function (r) { return '<tr><td>' + esc(r.date) + '</td><td>' + esc(r.item) + '</td><td>' + esc(r.qty) + ' ' + esc(r.unit) + '</td><td>' + esc(r.supplier) + '</td></tr>'; }).join('') +
+      '</table></div>' : '<div class="empty">עוד אין קליטות</div>');
+    return h;
+  }
+
+  function vFeed() {
+    var list = S.data.feed || [];
+    var workers = (S.data.overview && S.data.overview.workers || []).map(function (w) { return w.name; });
+    var h = '<h2 style="margin-top:8px">דיווחים אחרונים</h2><div class="hrow" style="margin-bottom:10px">' +
+      '<button type="button" class="tab' + (!S.feedWorker ? ' on' : '') + '" data-act="feedW" data-v="">כולם</button>' +
+      workers.map(function (w) { return '<button type="button" class="tab' + (S.feedWorker === w ? ' on' : '') + '" data-act="feedW" data-v="' + esc(w) + '">' + esc(w) + '</button>'; }).join('') + '</div><div class="list">';
+    list.forEach(function (x) {
+      h += '<div class="card"><div class="row"><b>' + esc(x.title) + '</b><span class="chip gray">' + esc(x.kind) + '</span></div>' +
+        '<span>' + x.parts.map(esc).join(' · ') + '</span>' + (x.details ? '<span class="small">' + esc(x.details) + '</span>' : '') +
+        '<div class="row"><span class="small muted">' + esc(x.date) + ' ' + esc(x.time) + ' · ' + esc(x.worker) + '</span><span>' + linksHtml(x.links) + '</span></div></div>';
+    });
+    if (!list.length) h += '<div class="empty">אין דיווחים</div>';
+    return h + '</div>';
+  }
+
+  function render() {
+    if (!S.pin) { app.innerHTML = vLogin(); var p = document.getElementById('pin'); if (p) p.focus(); return; }
+    var v = { overview: vOverview, clients: vClients, client: vClient, prices: vPrices, stock: vStock, feed: vFeed }[S.tab];
+    app.innerHTML = shell(v());
+  }
+
+  function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+
+  function act(a, v) {
+    switch (a) {
+      case 'login': {
+        var pin = val('pin').trim();
+        if (!/^\d{4,8}$/.test(pin)) { S.err = 'קוד של 4 עד 8 ספרות'; render(); return; }
+        var remember = document.getElementById('remember') && document.getElementById('remember').checked;
+        S.pin = pin; S.busy = true; S.err = ''; render();
+        call('adminLogin', [], function () {
+          if (remember) ls('pin', pin);
+          S.busy = false; S.tab = 'overview'; load('overview', true);
+        }, function (e) { S.pin = ''; S.busy = false; S.err = msg(e); render(); });
+        break;
+      }
+      case 'logout': S.pin = ''; ls('pin', null); invalidate(); render(); break;
+      case 'tab': S.tab = v; S.err = ''; S.msg = ''; if (v !== 'client') load(v); window.scrollTo(0, 0); break;
+      case 'refresh':
+        invalidate();
+        if (S.tab === 'client' && S.client) openClient(S.client.name); else load(S.tab, true);
+        break;
+      case 'client': if (v) openClient(v); break;
+      case 'saveCP': {
+        var p = S.client.data.prices[Number(v)];
+        call('adminSetPrice', [S.client.name, p.item, p.unit, val('cp' + v)], function () { invalidate(); flash('המחיר נשמר'); openClient(S.client.name); });
+        break;
+      }
+      case 'saveGP': {
+        var g = S.data.prices[Number(v)];
+        call('adminSetPrice', ['כללי', g.item, g.unit, val('gp' + v)], function () { var keep = S.data.prices; invalidate(); S.data.prices = keep; keep[Number(v)].price = val('gp' + v); flash('המחיר נשמר – ' + g.item); });
+        break;
+      }
+      case 'saveLine': {
+        var x = S.client.data.lines[Number(v)];
+        call('adminSetLine', [x.id, x.row, { manual: val('lm' + v) }], function () { invalidate(); flash('נשמר'); openClient(S.client.name); });
+        break;
+      }
+      case 'toggleLine': {
+        var y = S.client.data.lines[Number(v)];
+        call('adminSetLine', [y.id, y.row, { status: y.status === 'לא לחיוב' ? '' : 'לא לחיוב' }], function () { invalidate(); flash('עודכן'); openClient(S.client.name); });
+        break;
+      }
+      case 'pay': {
+        var amt = val('payAmt');
+        if (!(Number(String(amt).replace(/[,\s₪]/g, '')) > 0)) { S.err = 'צריך סכום'; render(); return; }
+        call('adminAddPayment', [S.client.name, amt, val('payMethod'), val('payNote'), ''], function () { invalidate(); flash('התשלום נרשם'); openClient(S.client.name); });
+        break;
+      }
+      case 'receipt': {
+        var q = val('rcQty');
+        if (!(Number(String(q).replace(/[,\s]/g, '')) > 0)) { S.err = 'צריך כמות'; render(); return; }
+        call('adminAddReceipt', [val('rcItem'), q, val('rcUnit'), val('rcSup'), ''], function () { delete S.data.stock; flash('הקליטה נרשמה'); load('stock', true); });
+        break;
+      }
+      case 'resolve':
+        call('adminResolveMaint', [v], function () { flash('סומן כטופל'); load('overview', true); });
+        break;
+      case 'reimburse':
+        call('adminReimburse', [v], function () { flash('סומן כהוחזר'); load('overview', true); });
+        break;
+      case 'feedW': S.feedWorker = v || ''; load('feed', true); break;
+    }
+  }
+
+  app.addEventListener('click', function (ev) {
+    var t = ev.target.closest('[data-act]');
+    if (!t || t.disabled) return;
+    act(t.getAttribute('data-act'), t.getAttribute('data-v'));
+  });
+  app.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' && ev.target.id === 'pin') act('login');
+  });
+  app.addEventListener('input', function (ev) {
+    if (ev.target.id === 'q') {
+      S.q = ev.target.value;
+      var pos = ev.target.selectionStart;
+      render();
+      var q = document.getElementById('q');
+      if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (e) {} }
+    }
+  });
+
+  var saved = ls('pin');
+  if (saved) { S.pin = saved; load('overview', true); } else render();
+})();
+</script>
+</body>
+</html>
