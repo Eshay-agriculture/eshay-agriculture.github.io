@@ -514,7 +514,7 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
 
   function detailFields() {
     var L = S.lists, c = S.cat, h = '';
-    if (c === 'דונמים' || c === 'זריעה' || c === 'דישון' || c === 'ריסוס') h += stepper('dunam', 'כמה דונם?');
+    if (c === 'דונמים' || c === 'זריעה' || c === 'דישון' || c === 'ריסוס') h += stepper('dunam', 'כמה דונם?') + placeField();
     if (c === 'זריעה') {
       h += chips('seed', 'איזה זרע?', L.seeds.concat(['אחר']));
       if (S.f.seed === 'אחר') h += textInput('seedOther', 'שם הזרע', '');
@@ -532,7 +532,7 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
         '<input class="inp num short" data-f="sprayQty" inputmode="decimal" placeholder="0" aria-label="כמות חומר" value="' + esc(S.f.sprayQty || '') + '">' +
         seg('sprayUnit', ['ליטר', 'גלון']) + '</div></div>';
     }
-    if (c === 'באלות') h += stepper('bales', 'כמה באלות?');
+    if (c === 'באלות') h += stepper('bales', 'כמה באלות?') + placeField();
     if (c === 'הובלה') {
       h += '<div class="grid">' + numInput('bales', 'מספר באלות', '0') + numInput('weight', 'משקל (ק"ג)', '0') +
         textInput('from', 'מאיפה', 'מקום העמסה') + textInput('to', 'לאן', 'יעד') + '</div>';
@@ -559,10 +559,11 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
   }
 
   function vDetails() {
-    var more = (S.showMore || S.f.place || S.f.notes)
-      ? textInput('place', 'חלקה / מיקום', 'לא חובה') +
+    var placeShown = ['דונמים', 'זריעה', 'דישון', 'ריסוס', 'באלות'].indexOf(S.cat) >= 0;
+    var more = (S.showMore || (S.f.place && !placeShown) || S.f.notes)
+      ? (placeShown ? '' : textInput('place', 'חלקה / מיקום', 'לא חובה')) +
         '<label class="field"><span class="label">הערה</span><textarea class="inp" data-f="notes" placeholder="לא חובה – אפשר גם לדבר למיקרופון שבמקלדת">' + esc(S.f.notes || '') + '</textarea></label>'
-      : '<button type="button" class="link" data-act="more" style="align-self:flex-start;font-size:16px">+ הוספת הערה או מיקום</button>';
+      : '<button type="button" class="link" data-act="more" style="align-self:flex-start;font-size:16px">' + (placeShown ? '+ הוספת הערה' : '+ הוספת הערה או מיקום') + '</button>';
     return '<div class="screen">' + topbar(S.group === 'proj' ? 'toProject' : 'toWork', 4) +
       '<div class="sel"><span>' + esc(S.client) + ' · ' + esc(S.cat === 'פרויקט' ? 'פרויקט: ' + (S.f.project || '') : S.work) + '</span></div>' +
       detailFields() +
@@ -839,6 +840,32 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     });
   }
 
+  /* חלקות קודמות של הלקוח */
+  S.places = {};
+  function loadPlaces(client) {
+    if (!client || S.places[client]) return;
+    S.places[client] = [];
+    call('appPlaces', [client], function (list) {
+      S.places[client] = list || [];
+      if (S.screen === 'details') {
+        var box = document.getElementById('placeChips');
+        if (box) box.outerHTML = placeChips();
+      }
+    }, function () {});
+  }
+  function placeChips() {
+    var list = (S.places && S.places[S.client]) || [];
+    if (!list.length) return '<div id="placeChips"></div>';
+    return '<div id="placeChips" class="chips">' + list.map(function (p) {
+      return '<button type="button" class="chip' + (S.f.place === p ? ' on' : '') + '" data-act="place" data-v="' + esc(p) + '">' + esc(p) + '</button>';
+    }).join('') + '</div>';
+  }
+  function placeField() {
+    return '<div class="field"><span class="label">איזו חלקה? <span class="muted" style="font-weight:400">(שם או אזור, כמו שמכירים)</span></span>' +
+      placeChips() +
+      '<input class="inp" data-f="place" placeholder="למשל: החלקה ליד הוואדי / צפון" autocomplete="off" value="' + esc(S.f.place || '') + '"></div>';
+  }
+
   function loadToday() {
     if (!S.worker) return;
     call('appToday', [S.worker], function (list) {
@@ -898,7 +925,8 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
         if (!name) break;
         S.client = name; S.newClient = true; go('work'); break;
       }
-      case 'work': prepWork(v); go('details'); break;
+      case 'work': prepWork(v); loadPlaces(S.client); go('details'); break;
+      case 'place': S.f.place = v; render(); break;
       case 'toWork': go('work'); break;
       case 'dec': case 'inc': {
         var n = num(S.f[v]) + (a === 'inc' ? 1 : -1);
@@ -971,7 +999,8 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
           if (p.newProject) S.f.newProj = '1';
           S.group = S.cat === 'פרויקט' ? 'proj' : 'agri';
           if (S.cat === 'פרויקט' && !S.f.projUnit) S.f.projUnit = 'שעה';
-          S.showMore = !!(p.place || p.notes);
+          S.showMore = !!p.notes;
+          loadPlaces(S.client);
           go('details');
         });
         break;
