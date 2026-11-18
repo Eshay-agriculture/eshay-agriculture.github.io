@@ -551,23 +551,48 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
       h += chips('otherUnit', 'יחידה', ['דונם', 'שעה', 'באלה', 'נסיעה', 'טון', 'יחידה']);
     }
     if (c === 'חומר') {
-      h += textInput('matName', 'שם החומר', '');
-      h += numInput('matQty', 'כמות', '0');
-      h += chips('matUnit', 'יחידה', ['ק"ג', 'ליטר', 'גלון', 'שק', 'יחידה']);
+      var mg = function (title, group, items) {
+        if (!items.length) return '';
+        return '<p class="sub" style="margin:4px 0 0">' + title + '</p><div class="chips">' + items.map(function (m) {
+          var on = S.f.matName === m && S.f.matGroup === group;
+          return '<button type="button" class="chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="mat" data-v="' + esc(group + '|' + m) + '">' + esc(m) + '</button>';
+        }).join('') + '</div>';
+      };
+      h += '<div class="field"><span class="label">איזה חומר?</span>' +
+        mg('זרעים', 'seed', L.seeds) + mg('דשנים', 'fert', L.ferts) +
+        mg('חומרי ריסוס', 'spray', (L.sprays || []).concat(['חומר ריסוס אחר'])) +
+        mg('אחר', 'other', ['חומר אחר']) + '</div>';
+      var g = S.f.matGroup;
+      if (g === 'other' || (g === 'spray' && S.f.matName === 'חומר ריסוס אחר')) h += textInput('matOther', 'שם החומר', '');
+      if (g === 'spray') {
+        h += '<div class="field"><span class="label">כמות</span><div class="hrow">' +
+          '<input class="inp num short" data-f="matQty" inputmode="decimal" placeholder="0" aria-label="כמות" value="' + esc(S.f.matQty || '') + '">' +
+          seg('matUnit', ['ליטר', 'גלון']) + '</div></div>';
+      } else if (g === 'other') {
+        h += numInput('matQty', 'כמות', '0');
+        h += chips('matUnit', 'יחידה', ['ק"ג', 'ליטר', 'גלון', 'שק', 'יחידה']);
+      } else {
+        h += numInput('matQty', 'כמות (ק"ג)', '0');
+      }
+    }
+    if (c === 'פירוט') {
+      h += '<label class="field"><span class="label">פירוט העבודה</span><textarea class="inp" data-f="workDesc" style="height:120px" placeholder="מה נעשה – בכתב, או להקליט למטה">' + esc(S.f.workDesc || '') + '</textarea></label>';
+      h += '<label class="field"><span class="label">מלל חופשי <span class="muted" style="font-weight:400">(לא חובה)</span></span><textarea class="inp" data-f="notes" placeholder="כל דבר נוסף">' + esc(S.f.notes || '') + '</textarea></label>';
     }
     return h;
   }
 
   function vDetails() {
     var placeShown = ['דונמים', 'זריעה', 'דישון', 'ריסוס', 'באלות'].indexOf(S.cat) >= 0;
-    var more = (S.showMore || (S.f.place && !placeShown) || S.f.notes)
+    var plain = S.cat === 'פירוט';
+    var more = plain ? '' : (S.showMore || (S.f.place && !placeShown) || S.f.notes)
       ? (placeShown ? '' : textInput('place', 'חלקה / מיקום', 'לא חובה')) +
         '<label class="field"><span class="label">הערה</span><textarea class="inp" data-f="notes" placeholder="לא חובה – אפשר גם לדבר למיקרופון שבמקלדת">' + esc(S.f.notes || '') + '</textarea></label>'
       : '<button type="button" class="link" data-act="more" style="align-self:flex-start;font-size:16px">' + (placeShown ? '+ הוספת הערה' : '+ הוספת הערה או מיקום') + '</button>';
     return '<div class="screen">' + topbar(S.group === 'proj' ? 'toProject' : 'toWork', 4) +
       '<div class="sel"><span>' + esc(S.client) + ' · ' + esc(S.cat === 'פרויקט' ? 'פרויקט: ' + (S.f.project || '') : S.work) + '</span></div>' +
       detailFields() +
-      (S.cat !== 'הובלה' ? '<div class="field"><span class="label">צילום מהשטח <span class="muted" style="font-weight:400">(לא חובה)</span></span>' + photoBlock('צילום מהשטח') + '</div>' : '') +
+      (S.cat !== 'הובלה' && !plain ? '<div class="field"><span class="label">צילום מהשטח <span class="muted" style="font-weight:400">(לא חובה)</span></span>' + photoBlock('צילום מהשטח') + '</div>' : '') +
       recBlock() +
       '<div class="date-row"><span class="label">תאריך העבודה</span><input type="date" data-f="date" aria-label="תאריך העבודה" max="' + esc(S.lists.today) + '" value="' + esc(S.f.date || '') + '"></div>' +
       more + errBox() + '<div class="spacer"></div>' +
@@ -652,7 +677,12 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     if (c === 'ריסוס') { has('spray', 'חומר ריסוס'); pos('sprayQty', 'כמות חומר'); has('sprayUnit', 'ליטר או גלון'); }
     if (c === 'באלות') pos('bales', 'מספר באלות');
     if (c === 'הובלה') { pos('bales', 'מספר באלות'); pos('weight', 'משקל'); has('from', 'מאיפה'); has('to', 'לאן'); }
-    if (c === 'חומר') { has('matName', 'שם החומר'); pos('matQty', 'כמות'); has('matUnit', 'יחידה'); }
+    if (c === 'חומר') {
+      if (!f.matName) miss.push('איזה חומר');
+      else if (f.matGroup === 'other' || f.matName === 'חומר ריסוס אחר') has('matOther', 'שם החומר');
+      pos('matQty', 'כמות'); has('matUnit', 'יחידה');
+    }
+    if (c === 'פירוט' && !String(f.workDesc || '').trim() && !S.audio && !f.audioLink) miss.push('פירוט העבודה (בכתב או בהקלטה)');
     if (c === 'אחר') { has('otherWork', 'מה בוצע'); pos('otherQty', 'כמות'); has('otherUnit', 'יחידה'); }
     if (c === 'פרויקט') {
       has('project', 'שם הפרויקט');
@@ -677,6 +707,8 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     p.worker = S.worker; p.client = S.client; p.work = S.work;
     if (S.newClient) p.newClient = '1';
     if (S.internal) p.internal = '1';
+    if (S.cat === 'חומר' && (S.f.matGroup === 'other' || S.f.matName === 'חומר ריסוס אחר')) p.matName = String(S.f.matOther || '').trim();
+    delete p.matGroup; delete p.matOther;
     if (S.cat === 'פרויקט') {
       if (S.f.newProj) p.newProject = '1';
       if (!(num(p.projQty) > 0)) { delete p.projQty; delete p.projUnit; }
@@ -935,6 +967,13 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
         if (el) el.value = S.f[v];
         break;
       }
+      case 'mat': {
+        var mi = v.indexOf('|'), grp = v.slice(0, mi), nm = v.slice(mi + 1);
+        S.f.matGroup = grp; S.f.matName = nm; S.err = '';
+        if (grp === 'seed' || grp === 'fert') S.f.matUnit = 'ק"ג';
+        else if (grp === 'spray') { if (S.f.matUnit !== 'ליטר' && S.f.matUnit !== 'גלון') S.f.matUnit = 'ליטר'; }
+        render(); break;
+      }
       case 'opt': { var i = v.indexOf('|'); S.f[v.slice(0, i)] = v.slice(i + 1); S.err = ''; render(); break; }
       case 'more': S.showMore = true; render(); break;
       case 'removePhoto': S.photo = null; S.f.photoLink = ''; render(); break;
@@ -995,6 +1034,14 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
           if (!p) { go('client'); S.err = 'הדיווח נמחק – אפשר לדווח מחדש'; render(); return; }
           S.client = p.client; S.newClient = !!p.newClient; S.work = p.work; S.cat = catOf(p.work);
           Object.keys(p).forEach(function (k) { if (['worker', 'client', 'work', 'newClient', 'newProject', 'internal'].indexOf(k) < 0) S.f[k] = p[k]; });
+          if (S.cat === 'חומר' && p.matName) {
+            var Lx = S.lists;
+            if ((Lx.seeds || []).indexOf(p.matName) >= 0) S.f.matGroup = 'seed';
+            else if ((Lx.ferts || []).indexOf(p.matName) >= 0) S.f.matGroup = 'fert';
+            else if ((Lx.sprays || []).indexOf(p.matName) >= 0) S.f.matGroup = 'spray';
+            else if (p.matUnit === 'ליטר' || p.matUnit === 'גלון') { S.f.matGroup = 'spray'; S.f.matOther = p.matName; S.f.matName = 'חומר ריסוס אחר'; }
+            else { S.f.matGroup = 'other'; S.f.matOther = p.matName; S.f.matName = 'חומר אחר'; }
+          }
           S.internal = !!p.internal;
           if (p.newProject) S.f.newProj = '1';
           S.group = S.cat === 'פרויקט' ? 'proj' : 'agri';
