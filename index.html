@@ -40,6 +40,7 @@ h2{margin:0;font-size:19px;font-weight:700}
 .chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .tile{min-height:70px;padding:6px;border-radius:16px;background:var(--card);border:1px solid var(--line);font-size:20px;font-weight:700;cursor:pointer}
+.tile.mat{background:#EAF2E6;border-color:#B9D1AF;color:#1F6B45}
 .tile.dash{border-style:dashed;border-color:#A9B4A6;font-size:18px;font-weight:500}
 .field{display:flex;flex-direction:column;gap:8px}
 .label{font-size:17px;font-weight:700}
@@ -142,6 +143,12 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     for (var i = 0; i < list.length; i++) if (list[i][0] === w) return list[i][1];
     return 'דונמים';
   }
+  function matWork() {
+    var list = (S.lists && S.lists.works) || [];
+    for (var i = 0; i < list.length; i++) if (list[i][1] === 'חומר') return list[i][0];
+    return '';
+  }
+  var MATQ = { seed: 'זרעים', fert: 'חומרי דישון' };
   function norm(s) {
     return String(s || '').replace(/["'׳״()\-\/.,]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
   }
@@ -151,7 +158,7 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     r.unshift(c);
     ls('recent', JSON.stringify(r.slice(0, 5)));
   }
-  function reset() { recCancel(); S.gps = ''; S.clockEdit = false; S.group = null; S.internal = false; S.client = ''; S.newClient = false; S.work = ''; S.cat = ''; S.f = {}; S.photo = null; S.audio = null; S.showMore = false; S.q = ''; }
+  function reset() { recCancel(); S.gps = ''; S.clockEdit = false; S.group = null; S.internal = false; S.client = ''; S.newClient = false; S.work = ''; S.cat = ''; S.f = {}; S.photo = null; S.audio = null; S.showMore = false; S.q = ''; S.matOnly = ''; }
   function geoAllowed() {
     if (!navigator.geolocation) return false;
     try {
@@ -456,9 +463,18 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     var h = '<div class="screen">' + topbar('toClient', 3) +
       '<div class="sel"><span>' + esc(S.client) + '</span><button type="button" class="link" data-act="toClient">שינוי</button></div>' +
       '<h1>איזו עבודה?</h1><div class="grid">';
-    S.lists.works.forEach(function (w) {
-      h += '<button type="button" class="tile' + (w[1] === 'חומר' ? ' dash' : '') + '" data-act="work" data-v="' + esc(w[0]) + '">' + esc(w[0]) + '</button>';
+    var tiles = S.lists.works.map(function (w) {
+      return '<button type="button" class="tile' + (w[1] === 'חומר' ? ' dash' : '') + '" data-act="work" data-v="' + esc(w[0]) + '">' + esc(w[0]) + '</button>';
     });
+    var names = S.lists.works.map(function (w) { return w[0]; });
+    if (matWork()) [['זריעה', 'seed', 'זרעים'], ['דישון', 'fert', 'חומרי דישון']].forEach(function (x) {
+      var i = names.indexOf(x[0]);
+      if (i < 0) return;
+      var at = Math.min(i + 2, tiles.length);
+      tiles.splice(at, 0, '<button type="button" class="tile mat" data-act="matq" data-v="' + x[1] + '">' + x[2] + '</button>');
+      names.splice(at, 0, x[2]);
+    });
+    h += tiles.join('');
     h += '<button type="button" class="tile dash" data-act="work" data-v="' + esc(OTHER) + '">אחר – כתיבה חופשית</button></div>';
     return h + '<div class="spacer"></div><p class="hint">לחיצה אחת – ועוברים לפרטים</p></div>';
   }
@@ -553,12 +569,14 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     if (c === 'חומר') {
       var mg = function (title, group, items) {
         if (!items.length) return '';
-        return '<p class="sub" style="margin:4px 0 0">' + title + '</p><div class="chips">' + items.map(function (m) {
+        return (title ? '<p class="sub" style="margin:4px 0 0">' + title + '</p>' : '') + '<div class="chips">' + items.map(function (m) {
           var on = S.f.matName === m && S.f.matGroup === group;
           return '<button type="button" class="chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="mat" data-v="' + esc(group + '|' + m) + '">' + esc(m) + '</button>';
         }).join('') + '</div>';
       };
-      h += '<div class="field"><span class="label">איזה חומר?</span>' +
+      if (S.matOnly === 'seed') h += '<div class="field"><span class="label">איזה זרע?</span>' + mg('', 'seed', L.seeds) + '</div>';
+      else if (S.matOnly === 'fert') h += '<div class="field"><span class="label">איזה דשן?</span>' + (mg('', 'fert', L.ferts) + mg('', 'other', ['דשן אחר'])).replace('</div><div class="chips">', '') + '</div>';
+      else h += '<div class="field"><span class="label">איזה חומר?</span>' +
         mg('זרעים', 'seed', L.seeds) + mg('דשנים', 'fert', L.ferts) +
         mg('חומרי ריסוס', 'spray', (L.sprays || []).concat(['חומר ריסוס אחר'])) +
         mg('אחר', 'other', ['חומר אחר']) + '</div>';
@@ -590,7 +608,7 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
         '<label class="field"><span class="label">הערה</span><textarea class="inp" data-f="notes" placeholder="לא חובה – אפשר גם לדבר למיקרופון שבמקלדת">' + esc(S.f.notes || '') + '</textarea></label>'
       : '<button type="button" class="link" data-act="more" style="align-self:flex-start;font-size:16px">' + (placeShown ? '+ הוספת הערה' : '+ הוספת הערה או מיקום') + '</button>';
     return '<div class="screen">' + topbar(S.group === 'proj' ? 'toProject' : 'toWork', 4) +
-      '<div class="sel"><span>' + esc(S.client) + ' · ' + esc(S.cat === 'פרויקט' ? 'פרויקט: ' + (S.f.project || '') : S.work) + '</span></div>' +
+      '<div class="sel"><span>' + esc(S.client) + ' · ' + esc(S.cat === 'פרויקט' ? 'פרויקט: ' + (S.f.project || '') : (S.matOnly ? MATQ[S.matOnly] : S.work)) + '</span></div>' +
       detailFields() +
       (S.cat !== 'הובלה' && !plain ? '<div class="field"><span class="label">צילום מהשטח <span class="muted" style="font-weight:400">(לא חובה)</span></span>' + photoBlock('צילום מהשטח') + '</div>' : '') +
       recBlock() +
@@ -957,7 +975,13 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
         if (!name) break;
         S.client = name; S.newClient = true; go('work'); break;
       }
-      case 'work': prepWork(v); loadPlaces(S.client); go('details'); break;
+      case 'work': S.matOnly = ''; prepWork(v); loadPlaces(S.client); go('details'); break;
+      case 'matq': {
+        var mw = matWork(); if (!mw) break;
+        if (S.matOnly !== v) { S.work = ''; }
+        prepWork(mw); S.matOnly = v; S.f.matUnit = 'ק"ג';
+        go('details'); break;
+      }
       case 'place': S.f.place = v; render(); break;
       case 'toWork': go('work'); break;
       case 'dec': case 'inc': {
