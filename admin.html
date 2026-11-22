@@ -62,6 +62,7 @@ a.link{display:inline-block}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
 .w-ok{color:var(--green)}.w-off{color:#3F4A43}.w-miss{color:var(--red)}
 .small{font-size:14px}
+.msel{margin-top:6px;height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--card);font-size:13px;padding:0 6px;max-width:100%}
 .empty{padding:14px;color:var(--muted);background:var(--card);border-radius:14px;border:1px dashed var(--line2)}
 </style>
 </head>
@@ -201,7 +202,7 @@ a.link{display:inline-block}
       h += '<p class="small muted" style="margin:0 0 8px">' + Object.keys(counts).map(function (k) { return esc(k) + ': ' + counts[k]; }).join(' · ') + ' — לחיצה על שורה פותחת את הלקוח</p><div class="list">';
       d.issues.slice(0, 60).forEach(function (x) {
         h += '<button type="button" class="card issue ' + x.level + '" data-act="client" data-v="' + esc(x.client) + '">' +
-          '<div class="row" style="width:100%"><b>' + esc(x.client) + '</b><span class="chip ' + (x.level === 'high' ? 'red' : 'amber') + '">' + esc(x.title) + '</span></div>' +
+          '<div class="row" style="width:100%"><b>' + esc(x.client) + '</b><span class="chip ' + (x.level === 'high' ? 'red' : x.level === 'low' ? 'gray' : 'amber') + '">' + esc(x.title) + '</span></div>' +
           '<span class="small">' + esc(x.text) + (x.extra ? ' · ' + esc(x.extra) : '') + '</span></button>';
       });
       if (d.issues.length > 60) h += '<p class="small muted">ועוד ' + (d.issues.length - 60) + '…</p>';
@@ -275,12 +276,27 @@ a.link{display:inline-block}
     var list = S.data.prices || [];
     var h = '<h2 style="margin-top:8px">מחירון כללי</h2><p class="small muted" style="margin:0 0 8px">מחיר ליחידה לכל הלקוחות. מחיר מיוחד ללקוח – בכרטיס הלקוח. פריטים בלי מחיר מופיעים ראשונים.</p>' +
       '<div class="scroll"><table class="table"><tr><th>פריט</th><th>מחיר ₪</th><th></th></tr>';
+    var MODES = [['', 'מחיר רגיל'], ['line', 'מחיר פרטני לכל שורה'], ['none', 'ללא מחיר (לא לחיוב)']];
+    var modeSel = function (p, i) {
+      return '<select class="msel" data-mode="' + i + '" aria-label="סוג מחיר">' + MODES.map(function (m) {
+        return '<option value="' + m[0] + '"' + ((p.mode || '') === m[0] ? ' selected' : '') + '>' + m[1] + '</option>';
+      }).join('') + '</select>';
+    };
     list.forEach(function (p, i) {
-      h += '<tr' + (p.price === '' ? ' style="background:#FFF7F6"' : '') + '><td>' + esc(p.item) + ' <span class="small muted">/ ' + esc(p.unit) + '</span></td>' +
+      if (p.mode) return;
+      h += '<tr' + (p.price === '' ? ' style="background:#FFF7F6"' : '') + '><td>' + (esc(p.item) || '<i class="muted">(בלי שם)</i>') + ' <span class="small muted">/ ' + esc(p.unit) + '</span><br>' + modeSel(p, i) + '</td>' +
         '<td><input class="inp num" id="gp' + i + '" inputmode="decimal" value="' + esc(p.price) + '"></td>' +
         '<td><button type="button" class="btn small" data-act="saveGP" data-v="' + i + '">שמירה</button></td></tr>';
     });
-    return h + '</table></div>';
+    h += '</table></div>';
+    var sp = list.map(function (p, i) { return [p, i]; }).filter(function (x) { return x[0].mode; });
+    h += '<h2 style="margin-top:18px">ללא מחיר / מחיר פרטני</h2><p class="small muted" style="margin:0 0 8px">' +
+      '<b>מחיר פרטני</b> – המחיר נקבע בכל שורה בכרטיס הלקוח (כל הפרויקטים נמצאים כאן אוטומטית). <b>ללא מחיר</b> – השורות מסומנות "לא לחיוב" ולא מופיעות כחסרות.</p>';
+    if (!sp.length) h += '<div class="empty">אין פריטים. בוחרים "ללא מחיר" או "מחיר פרטני" ברשימה למעלה.</div>';
+    else h += '<div class="scroll"><table class="table"><tr><th>פריט</th><th>סוג</th></tr>' + sp.map(function (x) {
+      return '<tr><td>' + (esc(x[0].item) || '<i class="muted">(בלי שם)</i>') + ' <span class="small muted">/ ' + esc(x[0].unit) + '</span></td><td>' + modeSel(x[0], x[1]) + '</td></tr>';
+    }).join('') + '</table></div>';
+    return h;
   }
 
   function vStock() {
@@ -395,6 +411,16 @@ a.link{display:inline-block}
     var t = ev.target.closest('[data-act]');
     if (!t || t.disabled) return;
     act(t.getAttribute('data-act'), t.getAttribute('data-v'));
+  });
+  app.addEventListener('change', function (ev) {
+    var el = ev.target;
+    if (!el.getAttribute || el.getAttribute('data-mode') === null) return;
+    var g = S.data.prices[Number(el.getAttribute('data-mode'))], mode = el.value;
+    el.disabled = true;
+    call('adminSetPriceMode', [g.item, g.unit, mode], function () {
+      var keep = S.data.prices; invalidate(); S.data.prices = keep; g.mode = mode;
+      flash(mode === 'none' ? 'סומן ללא מחיר – ' + (g.item || 'בלי שם') : mode === 'line' ? 'מחיר פרטני – ' + g.item : 'הוחזר למחיר רגיל – ' + g.item);
+    }, function (e) { el.disabled = false; S.err = msg(e); render(); });
   });
   app.addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter' && ev.target.id === 'pin') act('login');
