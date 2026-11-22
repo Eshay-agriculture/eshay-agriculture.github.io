@@ -531,16 +531,7 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
   function detailFields() {
     var L = S.lists, c = S.cat, h = '';
     if (c === 'דונמים' || c === 'זריעה' || c === 'דישון' || c === 'ריסוס') h += stepper('dunam', 'כמה דונם?') + placeField();
-    if (c === 'זריעה') {
-      h += chips('seed', 'איזה זרע?', L.seeds.concat(['אחר']));
-      if (S.f.seed === 'אחר') h += textInput('seedOther', 'שם הזרע', '');
-      h += numInput('seedQty', 'כמות זרע (ק"ג)', '0');
-    }
-    if (c === 'דישון') {
-      h += chips('fert', 'איזה דשן?', L.ferts.concat(['אחר']));
-      if (S.f.fert === 'אחר') h += textInput('fertOther', 'שם הדשן', '');
-      h += numInput('fertQty', 'כמות דשן (ק"ג)', '0');
-    }
+    if (c === 'זריעה' || c === 'דישון') h += '<p class="hint" style="text-align:right">' + (c === 'זריעה' ? 'את הזרעים מדווחים בכפתור "זרעים"' : 'את הדשן מדווחים בכפתור "חומרי דישון"') + '</p>';
     if (c === 'ריסוס') {
       h += textInput('spray', 'איזה חומר?', 'בחירה מהרשימה או הקלדה', 'sprayList');
       h += '<datalist id="sprayList">' + L.sprays.map(function (s) { return '<option value="' + esc(s) + '">'; }).join('') + '</datalist>';
@@ -690,8 +681,6 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     var pos = function (k, label) { if (!(num(f[k]) > 0)) miss.push(label); };
     var has = function (k, label) { if (!String(f[k] || '').trim()) miss.push(label); };
     if (c === 'דונמים' || c === 'זריעה' || c === 'דישון' || c === 'ריסוס') pos('dunam', 'מספר דונמים');
-    if (c === 'זריעה') { has('seed', 'סוג זרע'); if (f.seed === 'אחר') has('seedOther', 'שם הזרע'); pos('seedQty', 'כמות זרע'); }
-    if (c === 'דישון') { has('fert', 'סוג דשן'); if (f.fert === 'אחר') has('fertOther', 'שם הדשן'); pos('fertQty', 'כמות דשן'); }
     if (c === 'ריסוס') { has('spray', 'חומר ריסוס'); pos('sprayQty', 'כמות חומר'); has('sprayUnit', 'ליטר או גלון'); }
     if (c === 'באלות') pos('bales', 'מספר באלות');
     if (c === 'הובלה') { pos('bales', 'מספר באלות'); pos('weight', 'משקל'); has('from', 'מאיפה'); has('to', 'לאן'); }
