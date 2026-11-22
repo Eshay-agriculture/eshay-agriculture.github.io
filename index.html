@@ -581,7 +581,9 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
         h += numInput('matQty', 'כמות', '0');
         h += chips('matUnit', 'יחידה', ['ק"ג', 'ליטר', 'גלון', 'שק', 'יחידה']);
       } else {
-        h += numInput('matQty', 'כמות (ק"ג)', '0');
+        h += '<div class="field"><span class="label">כמות</span><div class="hrow">' +
+          '<input class="inp num short" data-f="matQty" inputmode="decimal" placeholder="0" aria-label="כמות" value="' + esc(S.f.matQty || '') + '">' +
+          seg('matUnit', ['טון', 'ק"ג']) + '</div></div>';
       }
     }
     if (c === 'פירוט') {
@@ -715,6 +717,11 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
     if (S.newClient) p.newClient = '1';
     if (S.internal) p.internal = '1';
     if (S.cat === 'חומר' && (S.f.matGroup === 'other' || S.f.matName === 'חומר ריסוס אחר')) p.matName = String(S.f.matOther || '').trim();
+    if (S.cat === 'חומר' && p.matUnit === 'טון') {
+      var tons = num(p.matQty);
+      p.matQty = String(Math.round(tons * 1000 * 100) / 100); p.matUnit = 'ק"ג';
+      p.notes = ((p.notes ? p.notes + ' ' : '') + '(דווח ' + tons + ' טון)').trim();
+    }
     delete p.matGroup; delete p.matOther;
     if (S.cat === 'פרויקט') {
       if (S.f.newProj) p.newProject = '1';
@@ -967,8 +974,9 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
       case 'work': S.matOnly = ''; prepWork(v); loadPlaces(S.client); go('details'); break;
       case 'matq': {
         var mw = matWork(); if (!mw) break;
-        if (S.matOnly !== v) { S.work = ''; }
-        prepWork(mw); S.matOnly = v; S.f.matUnit = 'ק"ג';
+        var fresh = S.matOnly !== v;
+        if (fresh) { S.work = ''; }
+        prepWork(mw); S.matOnly = v; if (fresh) S.f.matUnit = 'טון';
         go('details'); break;
       }
       case 'place': S.f.place = v; render(); break;
@@ -983,7 +991,7 @@ textarea.inp{height:90px;padding:12px 14px;resize:none}
       case 'mat': {
         var mi = v.indexOf('|'), grp = v.slice(0, mi), nm = v.slice(mi + 1);
         S.f.matGroup = grp; S.f.matName = nm; S.err = '';
-        if (grp === 'seed' || grp === 'fert') S.f.matUnit = 'ק"ג';
+        if (grp === 'seed' || grp === 'fert') { if (S.f.matUnit !== 'טון' && S.f.matUnit !== 'ק"ג') S.f.matUnit = 'טון'; }
         else if (grp === 'spray') { if (S.f.matUnit !== 'ליטר' && S.f.matUnit !== 'גלון') S.f.matUnit = 'ליטר'; }
         render(); break;
       }
